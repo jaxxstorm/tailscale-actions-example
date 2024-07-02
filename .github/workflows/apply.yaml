@@ -35,8 +35,6 @@ jobs:
 
     - name: Terraform Apply
       uses: dflook/terraform-apply@v1
-      with:
-        path: my-terraform-config
       env:
         TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
         TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
