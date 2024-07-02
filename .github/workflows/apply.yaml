@@ -1,3 +1,4 @@
+# File: .github/workflows/terraform-apply.yml
 name: Terraform Apply
 
 on:
@@ -7,6 +8,9 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     
     steps:
     - name: Checkout repository
@@ -38,11 +42,23 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Apply with plan
-      if: steps.check_artifact.outputs.plan_exists == 'true'
+    - name: Apply changes
       run: |
-        echo "Applying Terraform plan from artifact"
-        terraform apply -auto-approve tfplan
+        if [ "${{ steps.check_artifact.outputs.plan_exists }}" = "true" ]; then
+          echo "Attempting to apply Terraform plan from artifact"
+          if terraform show tfplan &>/dev/null; then
+            echo "Applying plan from artifact"
+            terraform apply -auto-approve tfplan
+          else
+            echo "Saved plan is stale. Generating new plan and applying"
+            terraform plan -out=tfplan
+            terraform apply -auto-approve tfplan
+          fi
+        else
+          echo "No plan artifact found. Generating new plan and applying"
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+        fi
       env:
         TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
         TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
@@ -50,14 +66,15 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-west-2
 
-    - name: Apply without plan
-      if: steps.check_artifact.outputs.plan_exists == 'false'
-      run: |
-        echo "WARNING: Applying Terraform changes without a pre-generated plan. This is a direct push to main."
-        terraform apply -auto-approve
-      env:
-        TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
-        TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: us-west-2
+    - name: Update PR comment
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: 'Terraform apply failed. Please check the workflow logs for details.'
+          })
