@@ -44,16 +44,16 @@ provider "aws" {
   region = "us-west-2"
 }
 
-# provider "mysql" { 
-#   alias = "dev"
-#   endpoint = "${module.db-dev.db_instance_endpoint}"
-#   username = "${module.db-dev.db_instance_username}"
-#   password = "${module.db-dev.db_instance_password}"
-# }
+provider "mysql" { 
+  alias = "dev"
+  endpoint = "${module.db-dev.db_instance_endpoint}"
+  username = "${module.db-dev.db_instance_username}"
+  password = "${module.db-dev.db_instance_password}"
+}
 
-# provider "mysql" { 
-#   alias = "prod"
-#   endpoint = "${module.db-prod.db_instance_endpoint}"
-#   username = "${module.db-prod.db_instance_username}"
-#   password = "${module.db-prod.db_instance_password}"
-# }
+provider "mysql" { 
+  alias = "prod"
+  endpoint = "${module.db-prod.db_instance_endpoint}"
+  username = "${module.db-prod.db_instance_username}"
+  password = "${module.db-prod.db_instance_password}"
+}
