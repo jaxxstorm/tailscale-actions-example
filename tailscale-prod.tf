@@ -56,7 +56,6 @@ resource "aws_instance" "prod" {
   instance_type          = "t3.micro"
   subnet_id              = module.vpc-shared.public_subnets[0]
   vpc_security_group_ids = [aws_security_group.prod.id]
-  key_name               = aws_key_pair.shared.key_name
 
   ebs_optimized = true
 

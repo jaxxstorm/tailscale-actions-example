@@ -31,12 +31,6 @@ module "tgw" {
   }
 }
 
-resource "aws_key_pair" "shared" {
-  provider = aws.shared
-  key_name = "lbriggs"
-  public_key = file("~/.ssh/id_rsa.pub")
-}
-
 module "vpc-shared" {
   providers = {
     aws = aws.shared
