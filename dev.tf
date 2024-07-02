@@ -107,8 +107,8 @@ resource "aws_security_group" "rds-dev" {
   }
 }
 
-# resource "mysql_database" "app-dev" {
-#   provider = mysql.dev
-#   name = "app"
-# }
+resource "mysql_database" "app-dev" {
+  provider = mysql.dev
+  name = "app"
+}
 
