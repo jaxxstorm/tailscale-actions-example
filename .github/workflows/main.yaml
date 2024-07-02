@@ -22,3 +22,6 @@ jobs:
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
+      env:
+        TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
+        TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
