@@ -1,0 +1,70 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Connect Tailscale
+      uses: tailscale/github-action@v2
+      with:
+        oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+        oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+        tags: tag:ci
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Check for plan artifact
+      id: check_artifact
+      run: |
+        if gh run download -n tfplan; then
+          echo "plan_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "plan_exists=false" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Apply with plan
+      if: steps.check_artifact.outputs.plan_exists == 'true'
+      run: |
+        echo "Applying Terraform plan from artifact"
+        terraform apply -auto-approve tfplan
+      env:
+        TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
+        TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: us-west-2
+
+    - name: Apply without plan
+      if: steps.check_artifact.outputs.plan_exists == 'false'
+      run: |
+        echo "WARNING: Applying Terraform changes without a pre-generated plan. This is a direct push to main."
+        terraform plan -no-color
+        echo "If the above plan looks correct, type 'yes' to apply:"
+        read -p "Apply? " response
+        if [ "$response" != "yes" ]; then
+          echo "Apply cancelled."
+          exit 1
+        fi
+        terraform apply -auto-approve
+      env:
+        TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
+        TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: us-west-2
