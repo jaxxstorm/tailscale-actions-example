@@ -1,5 +1,6 @@
 module "ubuntu-tailscale-dev" {
-  source           = "git@github.com:lbrlabs/terraform-cloudinit-tailscale.git"
+  source           = "lbrlabs/tailscale/cloudinit"
+  version          = "0.0.3"
   auth_key         = var.tailscale_auth_key_dev
   enable_ssh       = true
   hostname         = "subnet-router-dev"
