@@ -60,7 +60,7 @@ module "db-dev" {
   username = "user"
   port     = "3306"
 
-  vpc_security_group_ids = [aws_security_group.rds.id]
+  vpc_security_group_ids = [aws_security_group.rds-dev.id]
 
   # DB subnet group
   create_db_subnet_group = true
@@ -73,7 +73,7 @@ module "db-dev" {
   deletion_protection = false
 }
 
-resource "aws_security_group" "rds" {
+resource "aws_security_group" "rds-dev" {
   provider = aws.dev
   name_prefix = "rds-"
   description = "Allow inbound traffic to RDS"

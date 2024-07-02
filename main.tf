@@ -12,4 +12,10 @@ locals {
     module.vpc-prod.public_route_table_ids,
     module.vpc-prod.intra_route_table_ids
   )
+
+  shared_route_tables = concat(
+    module.vpc-shared.private_route_table_ids,
+    module.vpc-shared.public_route_table_ids,
+    module.vpc-shared.intra_route_table_ids
+  )
 }

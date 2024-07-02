@@ -33,14 +33,14 @@ data "aws_route_tables" "vpc-prod" {
 }
 
 resource "aws_route" "prod-shared" {
-  provider               = aws.dev
+  provider               = aws.prod
   count                  = length(local.prod_route_tables)
   route_table_id         = tolist(local.prod_route_tables)[count.index]
   destination_cidr_block = local.vpc_cidr_shared
   transit_gateway_id     = module.tgw.ec2_transit_gateway_id
 }
 
-module "db-dev" {
+module "db-prod" {
   providers = {
     aws = aws.prod
   }
@@ -59,10 +59,11 @@ module "db-dev" {
   username = "user"
   port     = "3306"
 
-  vpc_security_group_ids = [aws_security_group.rds.id]
+  vpc_security_group_ids = [aws_security_group.rds-prod.id]
 
   # DB subnet group
   create_db_subnet_group = true
+  skip_final_snapshot = true
   subnet_ids             = module.vpc-prod.private_subnets
 
   # DB parameter group
@@ -72,11 +73,11 @@ module "db-dev" {
   deletion_protection = false
 }
 
-resource "aws_security_group" "rds-dev" {
+resource "aws_security_group" "rds-prod" {
   provider = aws.prod
   name_prefix = "rds-"
   description = "Allow inbound traffic to RDS"
-  vpc_id      = module.vpc-dev.vpc_id
+  vpc_id      = module.vpc-prod.vpc_id
 
   ingress {
     description = "Allow inbound from VPC"

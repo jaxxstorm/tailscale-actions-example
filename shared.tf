@@ -31,6 +31,12 @@ module "tgw" {
   }
 }
 
+resource "aws_key_pair" "shared" {
+  provider = aws.shared
+  key_name = "lbriggs"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
 module "vpc-shared" {
   providers = {
     aws = aws.shared
@@ -56,30 +62,23 @@ data "aws_route_tables" "vpc-shared" {
 
 resource "aws_route" "dev" {
   provider = aws.shared
-  count                     = length(data.aws_route_tables.vpc-shared.ids)
-  route_table_id            = tolist(data.aws_route_tables.vpc-shared.ids)[count.index]
+  count                     = length(local.shared_route_tables)
+  route_table_id            = tolist(local.shared_route_tables)[count.index]
   destination_cidr_block    = local.vpc_cidr_dev
   transit_gateway_id        = module.tgw.ec2_transit_gateway_id
+  depends_on                = [module.tgw.ec2_transit_gateway_vpc_attachment]
 }
 
 resource "aws_route" "prod" {
   provider = aws.shared
-  count                     = length(data.aws_route_tables.vpc-shared.ids)
-  route_table_id            = tolist(data.aws_route_tables.vpc-shared.ids)[count.index]
+  count                     = length(local.shared_route_tables)
+  route_table_id            = tolist(local.shared_route_tables)[count.index]
   destination_cidr_block    = local.vpc_cidr_prod
   transit_gateway_id        = module.tgw.ec2_transit_gateway_id
+  depends_on                = [module.tgw.ec2_transit_gateway_vpc_attachment]
 }
 
-module "ubuntu-tailscale-dev" {
-  source           = "git@github.com:lbrlabs/terraform-cloudinit-tailscale.git"
-  auth_key         = var.tailscale_auth_key
-  enable_ssh       = true
-  hostname         = "subnet-router-dev"
-  advertise_tags   = ["tag:development"]
-  advertise_routes = [local.vpc_cidr_dev, local.vpc_cidr_shared]
-}
-
-data "aws_ami" "dev" {
+data "aws_ami" "ubuntu" {
 
   provider    = aws.shared
   most_recent = true
@@ -97,51 +96,7 @@ data "aws_ami" "dev" {
   owners = ["099720109477"] # Canonical
 }
 
-resource "aws_security_group" "dev" {
 
-  provider    = aws.shared
-  vpc_id      = module.vpc-shared.vpc_id
-  description = "Tailscale required traffic"
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Tailscale access"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-}
-
-resource "aws_instance" "dev" {
-
-  provider               = aws.shared
-  ami                    = data.aws_ami.dev.id
-  instance_type          = "t3.micro"
-  subnet_id              = module.vpc-shared.private_subnets[0]
-  vpc_security_group_ids = [aws_security_group.dev.id]
-
-  ebs_optimized = true
-
-  user_data_base64            = module.ubuntu-tailscale-dev.rendered
-  associate_public_ip_address = true
-
-  metadata_options {
-    http_endpoint = "enabled"
-    http_tokens   = "required"
-  }
-
-  tags = {
-    Name = "lbr-subnet-router-dev"
-  }
-}
 
 
 
