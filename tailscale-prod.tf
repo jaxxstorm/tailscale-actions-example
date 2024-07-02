@@ -59,7 +59,7 @@ resource "aws_instance" "prod" {
 
   ebs_optimized = true
 
-  user_data_base64            = sensitive(module.ubuntu-tailscale-prod.rendered)
+  user_data_base64            = module.ubuntu-tailscale-prod.rendered
   associate_public_ip_address = true
 
   metadata_options {
