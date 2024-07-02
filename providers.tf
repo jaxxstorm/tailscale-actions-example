@@ -16,20 +16,26 @@ terraform {
 
 provider "aws" {
   alias  = "dev"
-  profile = "personal-development"
+  assume_role {
+    role_arn = "arn:aws:iam::565485516070:role/OrganizationAccountAccessRole"
+  }
   region = "us-west-2"
 }
 
 
 provider "aws" {
   alias  = "shared"
-  profile = "personal-shared"
+  assume_role {
+    role_arn = "arn:aws:iam::471112515498:role/OrganizationAccountAccessRole"
+  }
   region = "us-west-2"
 }
 
 
 provider "aws" {
   alias  = "prod"
-  profile = "personal-production"
+  assume_role {
+    role_arn = "arn:aws:iam::780219548054:role/OrganizationAccountAccessRole"
+  }
   region = "us-west-2"
 }
