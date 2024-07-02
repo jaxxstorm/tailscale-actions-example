@@ -7,6 +7,9 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     
     steps:
     - name: Checkout repository
@@ -28,7 +31,9 @@ jobs:
       run: terraform init
 
     - name: Terraform Plan
-      run: terraform plan -no-color -out=tfplan
+      run: |
+        terraform plan -no-color -out=tfplan
+        terraform show -no-color tfplan > tfplan.txt
       env:
         TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
         TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
@@ -40,35 +45,29 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: tfplan
-        path: tfplan
+        path: |
+          tfplan
+          tfplan.txt
 
-    - name: Show Plan
-      run: terraform show -no-color tfplan
-      continue-on-error: true
-
-    - name: Update Pull Request
+    - name: Comment PR
       uses: actions/github-script@v6
-      if: github.event_name == 'pull_request'
-      env:
-        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
-          const output = `#### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-          
-          <details><summary>Show Plan</summary>
-          
-          \`\`\`\n
-          ${process.env.PLAN}
-          \`\`\`
-          
-          </details>
-          
-          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-          
+          const fs = require('fs');
+          const planOutput = fs.readFileSync('tfplan.txt', 'utf8');
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: output
+            body: `Terraform Plan Output:
+
+          <details><summary>Show Plan</summary>
+
+          \`\`\`hcl
+          ${planOutput}
+          \`\`\`
+
+          </details>
+          `
           })
