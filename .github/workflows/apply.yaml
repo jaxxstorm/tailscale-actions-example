@@ -54,13 +54,6 @@ jobs:
       if: steps.check_artifact.outputs.plan_exists == 'false'
       run: |
         echo "WARNING: Applying Terraform changes without a pre-generated plan. This is a direct push to main."
-        terraform plan -no-color
-        echo "If the above plan looks correct, type 'yes' to apply:"
-        read -p "Apply? " response
-        if [ "$response" != "yes" ]; then
-          echo "Apply cancelled."
-          exit 1
-        fi
         terraform apply -auto-approve
       env:
         TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
