@@ -49,44 +49,25 @@ jobs:
           tfplan
           tfplan.txt
 
-          - name: Comment PR
-          uses: actions/github-script@v6
-          with:
-            github-token: ${{secrets.GITHUB_TOKEN}}
-            script: |
-              const fs = require('fs');
-              let planOutput = fs.readFileSync('tfplan.txt', 'utf8');
-              
-              // Clean up the plan output
-              planOutput = planOutput
-                .replace(/^Terraform used the selected providers.*\n/, '')
-                .replace(/^Resource actions are indicated.*\n/, '')
-                .replace(/::debug::.*\n/g, '')
-                .replace(/::set-output.*\n/g, '')
-                .trim();
-              
-              let summary = '';
-              const match = planOutput.match(/Plan: (\d+) to add, (\d+) to change, (\d+) to destroy\./);
-              if (match) {
-                const [, add, change, destroy] = match;
-                summary = `Plan: ${add} to add, ${change} to change, ${destroy} to destroy.`;
-              }
-              
-              const body = `## Terraform Plan Summary
-              ${summary}
-    
-              <details><summary>Show Full Plan</summary>
-    
-              \`\`\`hcl
-              ${planOutput}
-              \`\`\`
-    
-              </details>
-              `;
-              
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-              })
+    - name: Comment PR
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const fs = require('fs');
+          const planOutput = fs.readFileSync('tfplan.txt', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `Terraform Plan Output:
+
+          <details><summary>Show Plan</summary>
+
+          \`\`\`hcl
+          ${planOutput}
+          \`\`\`
+
+          </details>
+          `
+          })
