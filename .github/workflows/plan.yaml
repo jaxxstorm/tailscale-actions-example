@@ -31,8 +31,6 @@ jobs:
         echo "\n===== DNS Resolution Test ====="
         nslookup releases.hashicorp.com
         nslookup github.com
-        echo "\n===== Ping Test ====="
-        ping -c 4 releases.hashicorp.com
         '
     
     - name: Connect Tailscale
