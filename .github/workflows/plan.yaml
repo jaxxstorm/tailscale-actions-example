@@ -53,6 +53,8 @@ jobs:
         echo "\n===== DNS Resolution Test ====="
         nslookup releases.hashicorp.com
         nslookup github.com
+        echo "\n===== Outbound connectivity ====="
+        ping -c 4 8.8.8.8
         '
 
     - name: terraform plan
