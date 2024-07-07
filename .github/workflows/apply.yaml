@@ -35,14 +35,23 @@ jobs:
       id: init
       run: terraform init -no-color
 
+    - name: Get PR Number
+      id: pr
+      run: |
+        PR_NUMBER=$(gh pr list --base ${{ github.ref_name }} --head ${{ github.sha }} --json number --jq '.[0].number')
+        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Download Terraform Plan
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
+      if: steps.pr.outputs.pr_number != ''
       continue-on-error: true
       with:
-        name: tfplan
+        name: tfplan-${{ steps.pr.outputs.pr_number }}
 
     - name: Terraform Plan (if no existing plan)
-      if: steps.download.outcome == 'failure'
+      if: steps.pr.outputs.pr_number == '' || failure()
       id: plan
       run: terraform plan -no-color -out=tfplan
       env:
