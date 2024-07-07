@@ -17,6 +17,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
     
     - name: Connect Tailscale
       uses: jaxxstorm/tailscale-github-action@c688cd1540188ec187964b96578a776c71b98136
@@ -38,7 +40,14 @@ jobs:
     - name: Get PR Number
       id: pr
       run: |
-        PR_NUMBER=$(gh pr list --base ${{ github.ref_name }} --head ${{ github.sha }} --json number --jq '.[0].number')
+        echo "Current SHA: ${{ github.sha }}"
+        echo "Current ref: ${{ github.ref }}"
+        PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K\d+' | head -1)
+        if [ -z "$PR_NUMBER" ]; then
+          echo "No PR number found in commit message"
+          PR_NUMBER=$(gh pr list --base ${{ github.ref_name }} --head ${{ github.sha }} --json number --jq '.[0].number')
+        fi
+        echo "PR number: $PR_NUMBER"
         echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,8 +59,19 @@ jobs:
       with:
         name: tfplan-${{ steps.pr.outputs.pr_number }}
 
+    - name: Check for downloaded plan
+      id: check_plan
+      run: |
+        if [ -f "tfplan" ]; then
+          echo "Downloaded plan found"
+          echo "plan_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "No downloaded plan found"
+          echo "plan_exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Terraform Plan (if no existing plan)
-      if: steps.pr.outputs.pr_number == '' || failure()
+      if: steps.check_plan.outputs.plan_exists != 'true'
       id: plan
       run: terraform plan -no-color -out=tfplan
       env:
