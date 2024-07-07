@@ -17,6 +17,27 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+
+    - name: Network Debugging with Netshoot before Tailscale
+      run: |
+        docker run --rm nicolaka/netshoot:latest /bin/bash -c '
+        echo "===== DNS Configuration ====="
+        cat /etc/resolv.conf
+        echo "\n===== Network Interfaces ====="
+        ip addr
+        echo "\n===== Routing Table ====="
+        ip route
+        echo "\n===== DNS Resolution Test ====="
+        nslookup releases.hashicorp.com
+        nslookup github.com
+        echo "\n===== Traceroute to Hashicorp ====="
+        traceroute releases.hashicorp.com
+        echo "\n===== Tailscale Status ====="
+        tailscale status
+        echo "\n===== Ping Test ====="
+        ping -c 4 releases.hashicorp.com
+        '
     
     - name: Connect Tailscale
       uses: jaxxstorm/tailscale-github-action@c688cd1540188ec187964b96578a776c71b98136
