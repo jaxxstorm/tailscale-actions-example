@@ -56,4 +56,5 @@ provider "mysql" {
   endpoint = "${module.db-prod.db_instance_endpoint}"
   username = "${module.db-prod.db_instance_username}"
   password = "${module.db-prod.db_instance_password}"
+  
 }
