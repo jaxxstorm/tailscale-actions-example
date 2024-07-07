@@ -31,10 +31,6 @@ jobs:
         echo "\n===== DNS Resolution Test ====="
         nslookup releases.hashicorp.com
         nslookup github.com
-        echo "\n===== Traceroute to Hashicorp ====="
-        traceroute releases.hashicorp.com
-        echo "\n===== Tailscale Status ====="
-        tailscale status
         echo "\n===== Ping Test ====="
         ping -c 4 releases.hashicorp.com
         '
@@ -59,13 +55,6 @@ jobs:
         echo "\n===== DNS Resolution Test ====="
         nslookup releases.hashicorp.com
         nslookup github.com
-        echo "\n===== Traceroute to Hashicorp ====="
-        traceroute releases.hashicorp.com
-        echo "\n===== Tailscale Status ====="
-        tailscale status
-        echo "\n===== Ping Test ====="
-        ping -c 4 releases.hashicorp.com
-        '
 
     - name: terraform plan
       uses: dflook/terraform-plan@v1
