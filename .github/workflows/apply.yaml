@@ -27,7 +27,7 @@ jobs:
         tags: tag:ci
 
     - name: DNS check
-      run: dig +short @releases.hashicorp.com
+      run: dig +short releases.hashicorp.com
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
