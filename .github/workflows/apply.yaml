@@ -37,8 +37,8 @@ jobs:
       id: init
       run: terraform init -no-color
 
-    - name: Get PR Number
-      id: pr
+    - name: Get PR and Run ID
+      id: pr_run
       run: |
         echo "Current SHA: ${{ github.sha }}"
         echo "Current ref: ${{ github.ref }}"
@@ -49,15 +49,23 @@ jobs:
         fi
         echo "PR number: $PR_NUMBER"
         echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        
+        if [ ! -z "$PR_NUMBER" ]; then
+          RUN_ID=$(gh run list --limit 100 --json databaseId,headBranch --jq ".[] | select(.headBranch == \"refs/pull/$PR_NUMBER/merge\") | .databaseId" | head -1)
+          echo "Run ID for PR #$PR_NUMBER: $RUN_ID"
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
     - name: Download Terraform Plan
       uses: actions/download-artifact@v4
-      if: steps.pr.outputs.pr_number != ''
-      continue-on-error: true
       with:
-        name: tfplan-${{ steps.pr.outputs.pr_number }}
+        name: tfplan
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+  
 
     - name: Check for downloaded plan
       id: check_plan
