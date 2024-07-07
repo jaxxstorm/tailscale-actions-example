@@ -27,18 +27,20 @@ jobs:
         tags: tag:ci
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      uses: hashicorp/setup-terraform@v3
       with:
         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
     - name: Terraform Apply
-      uses: dflook/terraform-apply@v1
-      with:
-        workspace: main
+      id: apply
+      run: terraform apply -no-color
+      continue-on-error: true
       env:
         TF_VAR_tailscale_auth_key_dev: ${{ secrets.TAILSCALE_AUTH_KEY_DEV }}
         TF_VAR_tailscale_auth_key_prod: ${{ secrets.TAILSCALE_AUTH_KEY_PROD }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-west-2
+
+  
         
