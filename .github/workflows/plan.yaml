@@ -49,8 +49,9 @@ jobs:
     - name: Upload Terraform Plan
       uses: actions/upload-artifact@v3
       with:
-        name: tfplan
+        name: tfplan-${{ github.event.pull_request.number }}
         path: tfplan
+        retention-days: 1
 
     - uses: actions/github-script@v7
       if: github.event_name == 'pull_request'
