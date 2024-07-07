@@ -24,6 +24,7 @@ jobs:
       with:
         oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
         oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+        version: latest
         tags: tag:ci
 
     - name: Setup Terraform
