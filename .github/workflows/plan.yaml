@@ -26,6 +26,10 @@ jobs:
         version: latest
         tags: tag:ci
 
+    - name: Sleep for 30 seconds
+      run: sleep 30s
+      shell: bash
+      
     - name: terraform plan
       uses: dflook/terraform-plan@v1
       with:
