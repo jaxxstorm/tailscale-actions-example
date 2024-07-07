@@ -17,8 +17,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 
     
     - name: Connect Tailscale
       uses: jaxxstorm/tailscale-github-action@c688cd1540188ec187964b96578a776c71b98136
@@ -37,49 +35,23 @@ jobs:
       id: init
       run: terraform init -no-color
 
-    - name: Get PR and Run ID
-      id: pr_run
+    - name: Get PR Number
+      id: pr
       run: |
-        echo "Current SHA: ${{ github.sha }}"
-        echo "Current ref: ${{ github.ref }}"
-        PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K\d+' | head -1)
-        if [ -z "$PR_NUMBER" ]; then
-          echo "No PR number found in commit message"
-          PR_NUMBER=$(gh pr list --base ${{ github.ref_name }} --head ${{ github.sha }} --json number --jq '.[0].number')
-        fi
-        echo "PR number: $PR_NUMBER"
+        PR_NUMBER=$(gh pr list --base ${{ github.ref_name }} --head ${{ github.sha }} --json number --jq '.[0].number')
         echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-        
-        if [ ! -z "$PR_NUMBER" ]; then
-          RUN_ID=$(gh run list --limit 100 --json databaseId,headBranch --jq ".[] | select(.headBranch == \"refs/pull/$PR_NUMBER/merge\") | .databaseId" | head -1)
-          echo "Run ID for PR #$PR_NUMBER: $RUN_ID"
-          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
-        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
     - name: Download Terraform Plan
       uses: actions/download-artifact@v4
+      if: steps.pr.outputs.pr_number != ''
+      continue-on-error: true
       with:
-        name: tfplan
-        run-id: ${{ github.event.workflow_run.id }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-  
-
-    - name: Check for downloaded plan
-      id: check_plan
-      run: |
-        if [ -f "tfplan" ]; then
-          echo "Downloaded plan found"
-          echo "plan_exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "No downloaded plan found"
-          echo "plan_exists=false" >> $GITHUB_OUTPUT
-        fi
+        name: tfplan-${{ steps.pr.outputs.pr_number }}
 
     - name: Terraform Plan (if no existing plan)
-      if: steps.check_plan.outputs.plan_exists != 'true'
+      if: steps.pr.outputs.pr_number == '' || failure()
       id: plan
       run: terraform plan -no-color -out=tfplan
       env:
