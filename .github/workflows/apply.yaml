@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v2
     
     - name: Connect Tailscale
-      uses: tailscale/github-action@v2
+      uses: jaxxstorm/tailscale-github-action@432334fcb4f6d361d694be8808a6b90de55665d0
       with:
         oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
         oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
