@@ -1,5 +1,5 @@
 locals {
-  vpc_cidr_dev  = "172.16.0.0/16"
+  vpc_cidr_dev  = "172.20.0.0/16"
   vpc_cidr_prod = "10.0.0.0/16"
   vpc_cidr_shared = "192.168.0.0/16"
 
