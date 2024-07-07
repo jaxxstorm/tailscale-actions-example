@@ -53,6 +53,7 @@ jobs:
         echo "\n===== DNS Resolution Test ====="
         nslookup releases.hashicorp.com
         nslookup github.com
+        '
 
     - name: terraform plan
       uses: dflook/terraform-plan@v1
