@@ -110,5 +110,6 @@ resource "aws_security_group" "rds-prod" {
 resource "mysql_database" "app-prod" {
   provider = mysql.prod
   name = "app"
+  depends_on = [ aws_instance.prod ]
 }
 
