@@ -34,28 +34,12 @@ jobs:
         '
     
     - name: Connect Tailscale
-      uses: jaxxstorm/tailscale-github-action@c688cd1540188ec187964b96578a776c71b98136
+      uses: tailscale/github-action@v2
       with:
         oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
         oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-        version: latest
+        version: 1.68.2
         tags: tag:ci
-
-    - name: Network Debugging with Netshoot
-      run: |
-        docker run --rm nicolaka/netshoot:latest /bin/bash -c '
-        echo "===== DNS Configuration ====="
-        cat /etc/resolv.conf
-        echo "\n===== Network Interfaces ====="
-        ip addr
-        echo "\n===== Routing Table ====="
-        ip route
-        echo "\n===== DNS Resolution Test ====="
-        nslookup releases.hashicorp.com
-        nslookup github.com
-        echo "\n===== Outbound connectivity ====="
-        ping -c 4 8.8.8.8
-        '
 
     - name: terraform plan
       uses: dflook/terraform-plan@v1
